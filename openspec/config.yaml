@@ -1,0 +1,44 @@
+schema: spec-driven
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+operations:
+  apply:
+    guidance:
+      - After each pending task in tasks.md, before marking its checkbox `-
+        [x]`, run and manually debug MindFlow in a browser or desktop target. Do
+        not mark the task complete until the change works in the running app.
+      - Start the app with `flutter pub get` then `flutter run -d chrome
+        --web-port=43123` (or another device from `flutter devices`). Keep the
+        dev server running while verifying; use the computerUse subagent or
+        browser to click through the UI affected by that task.
+      - Run any tests the task requires (`flutter test`, targeted test files) in
+        the same step. Fix failures before checking the box.
+      - Briefly note in the session what you verified in the app when marking
+        each task done.
+  archive:
+    guidance:
+      - Summarize what was verified in the running app during apply, not only
+        which checkboxes were ticked.
+githubCopilot:
+  cloudAgent: true

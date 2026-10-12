@@ -1,0 +1,10 @@
+name: mindflow_sync_server
+description: Personal vault sync server for MindFlow (passphrase-linked devices)
+publish_to: none
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  crypto: ^3.0.6
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4

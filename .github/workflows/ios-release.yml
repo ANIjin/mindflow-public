@@ -1,0 +1,38 @@
+name: iOS release
+on:
+  workflow_dispatch:
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS release (unsigned IPA for sideload)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP="build/ios/iphoneos/Runner.app"
+          test -d "$APP"
+          rm -rf ipa mindflow.ipa
+          mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          # Thin fat binaries are already device slices from flutter build ios.
+          (cd ipa && zip -qr ../mindflow.ipa Payload)
+          ls -lh mindflow.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mindflow-ios-ipa
+          path: mindflow.ipa
+          if-no-files-found: error

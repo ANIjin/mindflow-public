@@ -1,0 +1,24 @@
+name: Windows release
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.6
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Package Release
+        run: |
+          mkdir -p release
+          cp -R build\windows\x64\release\* release\
+          (cd release && zip -r ../mindflow-windows.zip .)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mindflow-windows-zip
+          path: mindflow-windows.zip
