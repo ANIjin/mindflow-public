@@ -1,24 +1,70 @@
 name: Windows release
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version without v prefix (e.g. 0.1)'
+        required: true
+        default: '0.1'
 
 jobs:
   windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
-      - run: flutter pub get
-      - run: flutter build windows --release
-      - name: Package Release
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Package zip
+        shell: pwsh
         run: |
-          mkdir -p release
-          cp -R build\windows\x64\release\* release\
-          (cd release && zip -r ../mindflow-windows.zip .)
+          $version = "${{ github.event.inputs.version }}"
+          $src = "build\windows\x64\runner\Release"
+          if (-not (Test-Path $src)) {
+            throw "Missing Flutter Windows output directory: $src"
+          }
+          $zip = "mindflow-windows-v$version.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          Get-Item $zip | Format-List Name, Length, FullName
+
       - uses: actions/upload-artifact@v4
         with:
-          name: mindflow-windows-zip
-          path: mindflow-windows.zip
+          name: mindflow-windows-v${{ github.event.inputs.version }}
+          path: mindflow-windows-v${{ github.event.inputs.version }}.zip
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: MindFlow v${{ github.event.inputs.version }}
+          body: |
+            ## MindFlow v${{ github.event.inputs.version }} — Windows
+
+            Desktop build for Windows (x64).
+
+            1. Download `mindflow-windows-v${{ github.event.inputs.version }}.zip`
+            2. Unzip it
+            3. Run `mindflow.exe`
+
+            Optional: point **Settings → Base URL** at a local OpenAI-compatible model such as [Strata](https://github.com/Niko1221/Strata) (`http://127.0.0.1:8080/v1`).
+          files: mindflow-windows-v${{ github.event.inputs.version }}.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
